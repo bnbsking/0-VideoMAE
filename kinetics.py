@@ -483,11 +483,12 @@ class VideoMAE(torch.utils.data.Dataset):
             decord_vr = decord.VideoReader(video_name, num_threads=1)
             duration = len(decord_vr)
 
-        segment_indices, skip_offsets = self._sample_train_indices(duration)
+        segment_indices, skip_offsets = self._sample_train_indices(duration) # np.array([1~1+avgDur]), np.array([0,0,...]) shape=64
 
         images = self._video_TSN_decord_batch_loader(directory, decord_vr, duration, segment_indices, skip_offsets)
+        # List[PIL] # len=16 # PIL.shape=(320,240)
 
-        process_data, mask = self.transform((images, None)) # T*C,H,W
+        process_data, mask = self.transform((images, None)) # T*C,H,W # [48,224,224], [1,0,...] len=1668
         process_data = process_data.view((self.new_length, 3) + process_data.size()[-2:]).transpose(0,1)  # T*C,H,W -> T,C,H,W -> C,T,H,W
         
         return (process_data, mask)
@@ -513,11 +514,11 @@ class VideoMAE(torch.utils.data.Dataset):
         return clips
 
     def _sample_train_indices(self, num_frames):
-        average_duration = (num_frames - self.skip_length + 1) // self.num_segments # (frames-64+1) // 1
+        average_duration = (num_frames - self.skip_length + 1) // self.num_segments # (frames-64+1) // 1 # e.g. 7
         if average_duration > 0:
-            offsets = np.multiply(list(range(self.num_segments)),
+            offsets = np.multiply(list(range(self.num_segments)), # np.array([0])
                                   average_duration)
-            offsets = offsets + np.random.randint(average_duration,
+            offsets = offsets + np.random.randint(average_duration, # np.array([0~avgDur])
                                                   size=self.num_segments)
         elif num_frames > max(self.num_segments, self.skip_length):
             offsets = np.sort(np.random.randint(
@@ -531,7 +532,7 @@ class VideoMAE(torch.utils.data.Dataset):
                 self.new_step, size=self.skip_length // self.new_step)
         else:
             skip_offsets = np.zeros(
-                self.skip_length // self.new_step, dtype=int)
+                self.skip_length // self.new_step, dtype=int) # np.array([0,0,...]) # shape=64//1=64
         return offsets + 1, skip_offsets
 
 
