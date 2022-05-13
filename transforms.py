@@ -122,6 +122,7 @@ class GroupMultiScaleCrop(object):
             for j, w in enumerate(crop_w):
                 if abs(i - j) <= self.max_distort:
                     pairs.append((w, h))
+        # [(240,240), (210,240), (240,210), (210,210), (180,210), (210,180), (180,180), (158,180), (180,158), (158,158)]
 
         crop_pair = random.choice(pairs)
         if not self.fix_crop:
@@ -134,6 +135,7 @@ class GroupMultiScaleCrop(object):
 
     def _sample_fix_offset(self, image_w, image_h, crop_w, crop_h):
         offsets = self.fill_fix_offset(self.more_fix_crop, image_w, image_h, crop_w, crop_h)
+        # [(0,0), (140,0), (0,60), (140,60), (70,30), (0,30), (140,30), (70,60), (70,0), (35,15), (105,15), (35,45), (105,45)]
         return random.choice(offsets)
 
     @staticmethod
