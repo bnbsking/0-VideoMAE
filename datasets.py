@@ -37,12 +37,12 @@ def build_pretraining_dataset(args):
     transform = DataAugmentationForVideoMAE(args)
     dataset = VideoMAE(
         root=None,
-        setting=args.data_path,
+        setting=args.data_path, # path/to/all.csv
         video_ext='mp4',
         is_color=True,
         modality='rgb',
-        new_length=args.num_frames,
-        new_step=args.sampling_rate,
+        new_length=args.num_frames, # 16
+        new_step=args.sampling_rate, # 4
         transform=transform,
         temporal_jitter=False,
         video_loader=True,
