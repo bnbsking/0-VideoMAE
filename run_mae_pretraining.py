@@ -131,7 +131,7 @@ def get_model(args):
 def main(args):
     utils.init_distributed_mode(args)
 
-    print(args)
+    print(args); import json; json.dump( vars(args), open(f"{args.output_dir}/args.json","w") );# raise
 
     device = torch.device(args.device)
 
@@ -144,8 +144,8 @@ def main(args):
 
     model = get_model(args)
     patch_size = model.encoder.patch_embed.patch_size
-    print("Patch size = %s" % str(patch_size))
-    args.window_size = (args.num_frames // 2, args.input_size // patch_size[0], args.input_size // patch_size[1])
+    print("Patch size = %s" % str(patch_size)) # (16,16)
+    args.window_size = (args.num_frames // 2, args.input_size // patch_size[0], args.input_size // patch_size[1]) # (16//2,224//16,224/16)=(8,14,14)
     args.patch_size = patch_size
 
     # get dataset
