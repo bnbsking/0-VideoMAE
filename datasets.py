@@ -19,7 +19,7 @@ class DataAugmentationForVideoMAE(object):
         if args.mask_type == 'tube':
             self.masked_position_generator = TubeMaskingGenerator(
                 args.window_size, args.mask_ratio
-            )
+            ) # call: binary np.array, shape=(1568,) # frames*patches=8*14*14=1568
 
     def __call__(self, images):
         process_data , _ = self.transform(images)
