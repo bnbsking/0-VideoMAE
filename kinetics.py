@@ -423,8 +423,8 @@ class VideoMAE(torch.utils.data.Dataset):
         If set to True, build a dataset instance without loading any dataset.
     """
     def __init__(self,
-                 root,
-                 setting,
+                 root, # None
+                 setting, # path/to/all.csv
                  train=True,
                  test_mode=False,
                  name_pattern='img_%05d.jpg',
@@ -433,12 +433,12 @@ class VideoMAE(torch.utils.data.Dataset):
                  modality='rgb',
                  num_segments=1,
                  num_crop=1,
-                 new_length=1,
-                 new_step=1,
+                 new_length=1, # 16
+                 new_step=1, # 4
                  transform=None,
                  temporal_jitter=False,
-                 video_loader=False,
-                 use_decord=False,
+                 video_loader=False, # True
+                 use_decord=False, # True
                  lazy_init=False):
 
         super(VideoMAE, self).__init__()
@@ -452,7 +452,7 @@ class VideoMAE(torch.utils.data.Dataset):
         self.num_crop = num_crop
         self.new_length = new_length
         self.new_step = new_step
-        self.skip_length = self.new_length * self.new_step
+        self.skip_length = self.new_length * self.new_step # 16*4=64
         self.temporal_jitter = temporal_jitter
         self.name_pattern = name_pattern
         self.video_loader = video_loader
@@ -463,7 +463,7 @@ class VideoMAE(torch.utils.data.Dataset):
 
 
         if not self.lazy_init:
-            self.clips = self._make_dataset(root, setting)
+            self.clips = self._make_dataset(root, setting) # [(video_path,label),...]
             if len(self.clips) == 0:
                 raise(RuntimeError("Found 0 video clips in subfolders of: " + root + "\n"
                                    "Check your data directory (opt.data-dir)."))
@@ -513,7 +513,7 @@ class VideoMAE(torch.utils.data.Dataset):
         return clips
 
     def _sample_train_indices(self, num_frames):
-        average_duration = (num_frames - self.skip_length + 1) // self.num_segments
+        average_duration = (num_frames - self.skip_length + 1) // self.num_segments # (frames-64+1) // 1
         if average_duration > 0:
             offsets = np.multiply(list(range(self.num_segments)),
                                   average_duration)
