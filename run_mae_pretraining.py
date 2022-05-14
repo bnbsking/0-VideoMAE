@@ -118,12 +118,12 @@ def get_args():
 
 def get_model(args):
     print(f"Creating model: {args.model}")
-    model = create_model(
+    model = create_model( # timm.create_model: timm/models/factory.py
         args.model, # "pretrain_videomae_base_patch16_224"
-        pretrained=False,
+        pretrained=False, # load imagenet pretrained weight if True
         drop_path_rate=args.drop_path, # 0
-        drop_block_rate=None,
-        decoder_depth=args.decoder_depth # 4
+        drop_block_rate=None, # model specific
+        decoder_depth=args.decoder_depth # 4 # model specific
     )
     return model
 
