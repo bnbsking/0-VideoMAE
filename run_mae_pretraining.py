@@ -13,7 +13,7 @@ from datasets import build_pretraining_dataset
 from engine_for_pretraining import train_one_epoch
 from utils import NativeScalerWithGradNormCount as NativeScaler
 import utils
-import modeling_pretrain
+import modeling_pretrain # must import or timm.models.create_model will not found the model
 
 
 def get_args():
@@ -119,11 +119,11 @@ def get_args():
 def get_model(args):
     print(f"Creating model: {args.model}")
     model = create_model(
-        args.model,
+        args.model, # "pretrain_videomae_base_patch16_224"
         pretrained=False,
-        drop_path_rate=args.drop_path,
+        drop_path_rate=args.drop_path, # 0
         drop_block_rate=None,
-        decoder_depth=args.decoder_depth
+        decoder_depth=args.decoder_depth # 4
     )
     return model
 
