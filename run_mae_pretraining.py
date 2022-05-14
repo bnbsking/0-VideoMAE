@@ -149,13 +149,13 @@ def main(args):
     args.patch_size = patch_size
 
     # get dataset
-    dataset_train = build_pretraining_dataset(args)
+    dataset_train = build_pretraining_dataset(args) # (3,16,224,224),(1568,)
 
 
-    num_tasks = utils.get_world_size()
-    global_rank = utils.get_rank()
+    num_tasks = utils.get_world_size() # 1
+    global_rank = utils.get_rank() # 0
     sampler_rank = global_rank
-    num_training_steps_per_epoch = len(dataset_train) // args.batch_size // num_tasks
+    num_training_steps_per_epoch = len(dataset_train) // args.batch_size // num_tasks # ucf101: 13330//4//1=3330
 
     sampler_train = torch.utils.data.DistributedSampler(
         dataset_train, num_replicas=num_tasks, rank=sampler_rank, shuffle=True
@@ -181,26 +181,28 @@ def main(args):
     model.to(device)
     model_without_ddp = model
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-    print("Model = %s" % str(model_without_ddp))
+    
+    with open(f"{args.output_dir}/layers.txt","w") as f:
+        f.write( f"{model_without_ddp}\n{n_parameters}" )
+    #print("Model = %s" % str(model_without_ddp))
     print('number of params: {} M'.format(n_parameters / 1e6))
 
     total_batch_size = args.batch_size * utils.get_world_size()
 
     args.lr = args.lr * total_batch_size / 256
-    args.min_lr = args.min_lr * total_batch_size / 256
-    args.warmup_lr = args.warmup_lr * total_batch_size / 256
+    args.min_lr = args.min_lr * total_batch_size / 256 # 1e-5*tbs/256
+    args.warmup_lr = args.warmup_lr * total_batch_size / 256 # 1e-6*tbs/256
     print("LR = %.8f" % args.lr)
-    print("Batch size = %d" % total_batch_size)
-    print("Number of training steps = %d" % num_training_steps_per_epoch)
-    print("Number of training examples per epoch = %d" % (total_batch_size * num_training_steps_per_epoch))
+    print("Batch size = %d" % total_batch_size) # 4
+    print("Number of training steps = %d" % num_training_steps_per_epoch) # 3330
+    print("Number of training examples per epoch = %d" % (total_batch_size * num_training_steps_per_epoch)) # 13320
 
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module
 
     optimizer = create_optimizer(
-        args, model_without_ddp)
+        args, model_without_ddp) # adam
     loss_scaler = NativeScaler()
 
     print("Use step level LR & WD scheduler!")
@@ -215,7 +217,7 @@ def main(args):
     print("Max WD = %.7f, Min WD = %.7f" % (max(wd_schedule_values), min(wd_schedule_values)))
 
     utils.auto_load_model(
-        args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
+        args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler) # resume
     torch.cuda.empty_cache()
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
