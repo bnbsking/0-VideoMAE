@@ -26,22 +26,22 @@ class PretrainVisionTransformerEncoder(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_chans=3, num_classes=0, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
                  drop_path_rate=0., norm_layer=nn.LayerNorm, init_values=None, tubelet_size=2,
-                 use_learnable_pos_emb=False):
+                 use_learnable_pos_emb=False): # 224, 16, 3, 0, 384*, 12, 12, 4, True*, None, 0, 0, 0, nn.LayerNorm, None, 2, False
         super().__init__()
         self.num_classes = num_classes
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
-        self.patch_embed = PatchEmbed(
-            img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim,tubelet_size=tubelet_size)
-        num_patches = self.patch_embed.num_patches
+        self.patch_embed = PatchEmbed( # B,3,16,224,224 -> B,784,8,14,14 -> B,1568(f),768(c)
+            img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim,tubelet_size=tubelet_size) 
+        num_patches = self.patch_embed.num_patches # 196
 
         # TODO: Add the cls token
-        if use_learnable_pos_emb:
+        if use_learnable_pos_emb: # False
             self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, embed_dim))
         else:
             # sine-cosine positional embeddings 
-            self.pos_embed = get_sinusoid_encoding_table(num_patches, embed_dim)
+            self.pos_embed = get_sinusoid_encoding_table(num_patches, embed_dim) # shape=(1,1568,768)
 
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule # []
         self.blocks = nn.ModuleList([
             Block(
                 dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
@@ -80,24 +80,25 @@ class PretrainVisionTransformerEncoder(nn.Module):
         self.num_classes = num_classes
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
-    def forward_features(self, x, mask):
+    def forward_features(self, x, mask): # (B,3,16,224,224),(B,1568)
         _, _, T, _, _ = x.shape
-        x = self.patch_embed(x)
+        x = self.patch_embed(x) # B,1568(f),768(c)
         
-        x = x + self.pos_embed.type_as(x).to(x.device).clone().detach()
+        x = x + self.pos_embed.type_as(x).to(x.device).clone().detach() # B,1568(F),768(C)
 
         B, _, C = x.shape
-        x_vis = x[~mask].reshape(B, -1, C) # ~mask means visible
+        # e.g. B=16, x[~mask].shape=(2560,768) # 16*1568*(20/196)=2560 # B*F*unmask_ratio=unmask_feature(UF)
+        x_vis = x[~mask].reshape(B, -1, C) # ~mask means visible # x[~mask].shape=(2560,768) # B,UF/B,C
 
         for blk in self.blocks:
-            x_vis = blk(x_vis)
+            x_vis = blk(x_vis) # B,160,768
 
-        x_vis = self.norm(x_vis)
+        x_vis = self.norm(x_vis) # B,160,768
         return x_vis
 
-    def forward(self, x, mask):
-        x = self.forward_features(x, mask)
-        x = self.head(x)
+    def forward(self, x, mask): # (B,3,16,224,224),(B,1568)
+        x = self.forward_features(x, mask) # B,160,768
+        x = self.head(x) # B,160,768
         return x
 
 class PretrainVisionTransformerDecoder(nn.Module):
@@ -176,7 +177,7 @@ class PretrainVisionTransformer(nn.Module):
                  decoder_depth=8,
                  decoder_num_heads=8, # 6
                  mlp_ratio=4., 
-                 qkv_bias=False, 
+                 qkv_bias=False, # True
                  qk_scale=None, 
                  drop_rate=0., 
                  attn_drop_rate=0.,
