@@ -203,7 +203,7 @@ def main(args):
 
     optimizer = create_optimizer(
         args, model_without_ddp) # adam
-    loss_scaler = NativeScaler()
+    loss_scaler = NativeScaler() # torch.cuda.amp.GradScaler() # https://pytorch.org/docs/stable/notes/amp_examples.html
 
     print("Use step level LR & WD scheduler!")
     lr_schedule_values = utils.cosine_scheduler(
