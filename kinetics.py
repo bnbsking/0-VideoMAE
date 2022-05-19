@@ -462,7 +462,7 @@ class VideoMAE(torch.utils.data.Dataset):
         self.lazy_init = lazy_init
 
 
-        if not self.lazy_init:
+        if not self.lazy_init: # True
             self.clips = self._make_dataset(root, setting) # [(video_path,label),...]
             if len(self.clips) == 0:
                 raise(RuntimeError("Found 0 video clips in subfolders of: " + root + "\n"
@@ -471,7 +471,7 @@ class VideoMAE(torch.utils.data.Dataset):
     def __getitem__(self, index):
 
         directory, target = self.clips[index]
-        if self.video_loader:
+        if self.video_loader: # True
             if '.' in directory.split('/')[-1]:
                 # data in the "setting" file already have extension, e.g., demo.mp4
                 video_name = directory
@@ -483,7 +483,7 @@ class VideoMAE(torch.utils.data.Dataset):
             decord_vr = decord.VideoReader(video_name, num_threads=1)
             duration = len(decord_vr)
 
-        segment_indices, skip_offsets = self._sample_train_indices(duration) # np.array([1~1+avgDur]), np.array([0,0,...]) shape=64
+        segment_indices, skip_offsets = self._sample_train_indices(duration) # np.array([1~1+avgDur]), np.array([0,0,...]) shape=64 and all are zeros
 
         images = self._video_TSN_decord_batch_loader(directory, decord_vr, duration, segment_indices, skip_offsets)
         # List[PIL] # len=16 # PIL.shape=(320,240)
@@ -527,7 +527,7 @@ class VideoMAE(torch.utils.data.Dataset):
         else:
             offsets = np.zeros((self.num_segments,))
 
-        if self.temporal_jitter:
+        if self.temporal_jitter: # False
             skip_offsets = np.random.randint(
                 self.new_step, size=self.skip_length // self.new_step)
         else:
