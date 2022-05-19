@@ -149,8 +149,8 @@ def main(args):
     args.patch_size = patch_size
 
     # get dataset
-    dataset_train = build_pretraining_dataset(args) # (3,16,224,224),(1568,)
-
+    dataset_train = build_pretraining_dataset(args) # len=number of videos # each data: (3,16,224,224),(1568,) # 1568=8*14*14
+    # multi-scaled crop, tensor conversion and normalization, trim 16 frames from each videos (interval=4)
 
     num_tasks = utils.get_world_size() # 1
     global_rank = utils.get_rank() # 0
