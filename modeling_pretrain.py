@@ -168,13 +168,13 @@ class PretrainVisionTransformer(nn.Module):
                  patch_size=16, 
                  encoder_in_chans=3, 
                  encoder_num_classes=0, 
-                 encoder_embed_dim=768, 
+                 encoder_embed_dim=768, # 384
                  encoder_depth=12,
                  encoder_num_heads=12, 
-                 decoder_num_classes=1536, #  decoder_num_classes=768, 
-                 decoder_embed_dim=512, 
+                 decoder_num_classes=1536, # (X) decoder_num_classes=768, 
+                 decoder_embed_dim=512, # 384
                  decoder_depth=8,
-                 decoder_num_heads=8, 
+                 decoder_num_heads=8, # 6
                  mlp_ratio=4., 
                  qkv_bias=False, 
                  qk_scale=None, 
