@@ -138,20 +138,20 @@ class PatchEmbed(nn.Module):
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         self.tubelet_size = int(tubelet_size)
-        num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0]) * (num_frames // self.tubelet_size)
+        num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0]) * (num_frames // self.tubelet_size) # 14*14*8=1568
         self.img_size = img_size
         self.patch_size = patch_size
         self.num_patches = num_patches
         self.proj = nn.Conv3d(in_channels=in_chans, out_channels=embed_dim, 
-                            kernel_size = (self.tubelet_size,  patch_size[0],patch_size[1]), 
-                            stride=(self.tubelet_size,  patch_size[0],  patch_size[1]))
+                            kernel_size = (self.tubelet_size,  patch_size[0],patch_size[1]),
+                            stride=(self.tubelet_size,  patch_size[0],  patch_size[1])) # channel 3->384 # kernel=stride=(2,16,16)
 
     def forward(self, x, **kwargs):
-        B, C, T, H, W = x.shape
+        B, C, T, H, W = x.shape # B,3,16,224,224
         # FIXME look at relaxing size constraints
         assert H == self.img_size[0] and W == self.img_size[1], \
             f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
-        x = self.proj(x).flatten(2).transpose(1, 2)
+        x = self.proj(x).flatten(2).transpose(1, 2) # B,784,8,14,14 -> B,1568,768
         return x
     
 # sin-cos position encoding
