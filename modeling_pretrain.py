@@ -107,19 +107,19 @@ class PretrainVisionTransformerDecoder(nn.Module):
     def __init__(self, patch_size=16, num_classes=768, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
                  drop_path_rate=0., norm_layer=nn.LayerNorm, init_values=None, num_patches=196, tubelet_size=2
-                 ):
+                 ): # 16, 1536, 384, 12, 12, 4, True, None, 0, 0, 0, nn.LayerNorm, 0, 1568, 2
         super().__init__()
         self.num_classes = num_classes
-        assert num_classes == 3 * tubelet_size * patch_size ** 2 
-        self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
+        assert num_classes == 3 * tubelet_size * patch_size ** 2 # 3*2*16**2=1536
+        self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models # 384
         self.patch_size = patch_size
 
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule # []
         self.blocks = nn.ModuleList([
             Block(
                 dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
                 drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer,
-                init_values=init_values)
+                init_values=init_values) # 384,12,4,True,None,0,0,0,0,nn.LayerNorm,0
             for i in range(depth)])
         self.norm =  norm_layer(embed_dim)
         self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
@@ -172,7 +172,7 @@ class PretrainVisionTransformer(nn.Module):
                  encoder_embed_dim=768, # 384
                  encoder_depth=12,
                  encoder_num_heads=12, 
-                 decoder_num_classes=1536, # (X) decoder_num_classes=768, 
+                 decoder_num_classes=1536, # 1536 # (X) decoder_num_classes=768, 
                  decoder_embed_dim=512, # 384
                  decoder_depth=8,
                  decoder_num_heads=8, # 6
@@ -191,46 +191,46 @@ class PretrainVisionTransformer(nn.Module):
                  ):
         super().__init__()
         self.encoder = PretrainVisionTransformerEncoder(
-            img_size=img_size, 
-            patch_size=patch_size, 
-            in_chans=encoder_in_chans, 
-            num_classes=encoder_num_classes, 
-            embed_dim=encoder_embed_dim, 
-            depth=encoder_depth,
-            num_heads=encoder_num_heads, 
-            mlp_ratio=mlp_ratio, 
-            qkv_bias=qkv_bias, 
-            qk_scale=qk_scale, 
-            drop_rate=drop_rate, 
-            attn_drop_rate=attn_drop_rate,
-            drop_path_rate=drop_path_rate, 
-            norm_layer=norm_layer, 
-            init_values=init_values,
-            tubelet_size=tubelet_size,
-            use_learnable_pos_emb=use_learnable_pos_emb)
+            img_size=img_size, # 224
+            patch_size=patch_size, # 16
+            in_chans=encoder_in_chans, # 3
+            num_classes=encoder_num_classes, # 0
+            embed_dim=encoder_embed_dim, # 384
+            depth=encoder_depth, # 12
+            num_heads=encoder_num_heads, # 12 
+            mlp_ratio=mlp_ratio, # 4
+            qkv_bias=qkv_bias, # True
+            qk_scale=qk_scale, # None
+            drop_rate=drop_rate, # 0
+            attn_drop_rate=attn_drop_rate, # 0
+            drop_path_rate=drop_path_rate, # 0
+            norm_layer=norm_layer, # nn.LayerNorm
+            init_values=init_values, # 0
+            tubelet_size=tubelet_size, # 2
+            use_learnable_pos_emb=use_learnable_pos_emb) # False
 
         self.decoder = PretrainVisionTransformerDecoder(
-            patch_size=patch_size, 
-            num_patches=self.encoder.patch_embed.num_patches,
-            num_classes=decoder_num_classes, 
-            embed_dim=decoder_embed_dim, 
-            depth=decoder_depth,
-            num_heads=decoder_num_heads, 
-            mlp_ratio=mlp_ratio, 
-            qkv_bias=qkv_bias, 
-            qk_scale=qk_scale, 
-            drop_rate=drop_rate, 
-            attn_drop_rate=attn_drop_rate,
-            drop_path_rate=drop_path_rate, 
-            norm_layer=norm_layer, 
-            init_values=init_values,
-            tubelet_size=tubelet_size)
+            patch_size=patch_size, # 16
+            num_patches=self.encoder.patch_embed.num_patches, # 1568
+            num_classes=decoder_num_classes, # 1536
+            embed_dim=decoder_embed_dim, # 384
+            depth=decoder_depth, # 8
+            num_heads=decoder_num_heads, # 12
+            mlp_ratio=mlp_ratio, # 4
+            qkv_bias=qkv_bias, # True
+            qk_scale=qk_scale, # None
+            drop_rate=drop_rate, # 0
+            attn_drop_rate=attn_drop_rate, # 0
+            drop_path_rate=drop_path_rate, # 0
+            norm_layer=norm_layer, # nn.LayerNorm
+            init_values=init_values, # 0
+            tubelet_size=tubelet_size) # 2
 
-        self.encoder_to_decoder = nn.Linear(encoder_embed_dim, decoder_embed_dim, bias=False)
+        self.encoder_to_decoder = nn.Linear(encoder_embed_dim, decoder_embed_dim, bias=False) # 384,384
 
-        self.mask_token = nn.Parameter(torch.zeros(1, 1, decoder_embed_dim))
+        self.mask_token = nn.Parameter(torch.zeros(1, 1, decoder_embed_dim)) # 1,1,384
 
-        self.pos_embed = get_sinusoid_encoding_table(self.encoder.patch_embed.num_patches, decoder_embed_dim)
+        self.pos_embed = get_sinusoid_encoding_table(self.encoder.patch_embed.num_patches, decoder_embed_dim) # 
 
         trunc_normal_(self.mask_token, std=.02)
 
@@ -251,9 +251,9 @@ class PretrainVisionTransformer(nn.Module):
     def no_weight_decay(self):
         return {'pos_embed', 'cls_token', 'mask_token'}
 
-    def forward(self, x, mask):
+    def forward(self, x, mask): # (B,3,16,224,224), (B,1568)
         _, _, T, _, _ = x.shape
-        x_vis = self.encoder(x, mask) # [B, N_vis, C_e]
+        x_vis = self.encoder(x, mask) # [B, N_vis, C_e] # 
         x_vis = self.encoder_to_decoder(x_vis) # [B, N_vis, C_d]
         B, N, C = x_vis.shape
         # we don't unshuffle the correct visible token order, 
