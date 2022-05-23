@@ -622,7 +622,7 @@ def create_random_augment(
     input_size,
     auto_augment=None,
     interpolation="bilinear",
-):
+): # (224,224) # rand-m7-n4-mstd0.5-inc1 # bicubic
     """
     Get video randaug transform.
 
@@ -649,7 +649,7 @@ def create_random_augment(
             aa_params["interpolation"] = _pil_interp(interpolation)
         if auto_augment.startswith("rand"):
             return transforms.Compose(
-                [rand_augment_transform(auto_augment, aa_params)]
+                [rand_augment_transform(auto_augment, aa_params)] # rand-m7-n4-mstd0.5-inc1, {"translate_const":100,"interpolation":bicubic*}
             )
     raise NotImplementedError
 
