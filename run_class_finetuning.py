@@ -219,21 +219,21 @@ def main(args, ds_init):
 
     cudnn.benchmark = True
 
-    dataset_train, args.nb_classes = build_dataset(is_train=True, test_mode=False, args=args)
+    dataset_train, args.nb_classes = build_dataset(is_train=True, test_mode=False, args=args) # buffer:Tensor[3,16,224,224],label:int,idx,{}) # 2
     if args.disable_eval_during_finetuning:
         dataset_val = None
     else:
-        dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args)
-    dataset_test, _ = build_dataset(is_train=False, test_mode=True, args=args)
+        dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args) # buffer,label,videoNameWithoutExt
+    dataset_test, _ = build_dataset(is_train=False, test_mode=True, args=args) # buffer,label,videoNameWithoutExt,int,int
     
 
-    num_tasks = utils.get_world_size()
-    global_rank = utils.get_rank()
+    num_tasks = utils.get_world_size() # 1
+    global_rank = utils.get_rank() # 0
     sampler_train = torch.utils.data.DistributedSampler(
         dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
     )
     print("Sampler_train = %s" % str(sampler_train))
-    if args.dist_eval:
+    if args.dist_eval: # True
         if len(dataset_val) % num_tasks != 0:
             print('Warning: Enabling distributed evaluation with an eval dataset not divisible by process number. '
                     'This will slightly alter validation results as extra duplicate entries are added to achieve '
@@ -251,10 +251,10 @@ def main(args, ds_init):
     else:
         log_writer = None
 
-    if args.num_sample > 1:
+    if args.num_sample > 1: # False
         collate_func = partial(multiple_samples_collate, fold=False)
     else:
-        collate_func = None
+        collate_func = None # default
 
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
