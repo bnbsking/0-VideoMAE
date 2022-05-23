@@ -52,7 +52,7 @@ def build_pretraining_dataset(args):
     return dataset
 
 
-def build_dataset(is_train, test_mode, args):
+def build_dataset(is_train, test_mode, args): # True, False, args
     if args.data_set == 'Kinetics-400':
         mode = None
         anno_path = None
@@ -129,18 +129,18 @@ def build_dataset(is_train, test_mode, args):
             anno_path = os.path.join(args.data_path, 'test.csv') 
 
         dataset = VideoClsDataset(
-            anno_path=anno_path,
+            anno_path=anno_path, # path/to/train.csv
             data_path='/',
             mode=mode,
-            clip_len=args.num_frames,
-            frame_sample_rate=args.sampling_rate,
+            clip_len=args.num_frames, # 16
+            frame_sample_rate=args.sampling_rate, # 4
             num_segment=1,
-            test_num_segment=args.test_num_segment,
-            test_num_crop=args.test_num_crop,
+            test_num_segment=args.test_num_segment, # 5
+            test_num_crop=args.test_num_crop, # 3
             num_crop=1 if not test_mode else 3,
             keep_aspect_ratio=True,
-            crop_size=args.input_size,
-            short_side_size=args.short_side_size,
+            crop_size=args.input_size, # 224
+            short_side_size=args.short_side_size, # 224
             new_height=256,
             new_width=320,
             args=args)
@@ -162,7 +162,7 @@ def build_dataset(is_train, test_mode, args):
         dataset = VideoClsDataset(
             anno_path=anno_path,
             data_path='/',
-            mode=mode,
+            mode=mode, # train
             clip_len=args.num_frames,
             frame_sample_rate=args.sampling_rate,
             num_segment=1,
