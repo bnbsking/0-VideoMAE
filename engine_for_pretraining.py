@@ -30,9 +30,9 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
                 if wd_schedule_values is not None and param_group["weight_decay"] > 0:
                     param_group["weight_decay"] = wd_schedule_values[it]
 
-        videos, bool_masked_pos = batch
+        videos, bool_masked_pos = batch # (B,3,16,224,224), (B,1568)
         videos = videos.to(device, non_blocking=True)
-        bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
+        bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool) # (1568,)
 
         with torch.no_grad():
             # calculate the predict label
@@ -40,17 +40,18 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
             std = torch.as_tensor(IMAGENET_DEFAULT_STD).to(device)[None, :, None, None, None]
             unnorm_videos = videos * std + mean  # in [0, 1]
 
-            if normlize_target:
+            if normlize_target: # True
                 videos_squeeze = rearrange(unnorm_videos, 'b c (t p0) (h p1) (w p2) -> b (t h w) (p0 p1 p2) c', p0=2, p1=patch_size, p2=patch_size)
+                # b,3,8*2=16,14*16=224,14*16=224 -> b,8*14*14=1568,2*16*16=512,3
                 videos_norm = (videos_squeeze - videos_squeeze.mean(dim=-2, keepdim=True)
                     ) / (videos_squeeze.var(dim=-2, unbiased=True, keepdim=True).sqrt() + 1e-6)
                 # we find that the mean is about 0.48 and standard deviation is about 0.08.
-                videos_patch = rearrange(videos_norm, 'b n p c -> b n (p c)')
+                videos_patch = rearrange(videos_norm, 'b n p c -> b n (p c)') # b,1568,1536
             else:
                 videos_patch = rearrange(unnorm_videos, 'b c (t p0) (h p1) (w p2) -> b (t h w) (p0 p1 p2 c)', p0=2, p1=patch_size, p2=patch_size)
 
             B, _, C = videos_patch.shape
-            labels = videos_patch[bool_masked_pos].reshape(B, -1, C)
+            labels = videos_patch[bool_masked_pos].reshape(B, -1, C) # B,1408,1536
 
         with torch.cuda.amp.autocast():
             outputs = model(videos, bool_masked_pos)
