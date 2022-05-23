@@ -26,7 +26,7 @@ class PretrainVisionTransformerEncoder(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_chans=3, num_classes=0, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
                  drop_path_rate=0., norm_layer=nn.LayerNorm, init_values=None, tubelet_size=2,
-                 use_learnable_pos_emb=False): # 224, 16, 3, 0, 384*, 12, 12, 4, True*, None, 0, 0, 0, nn.LayerNorm, None, 2, False
+                 use_learnable_pos_emb=False): # 224, 16, 3, 0, 768, 12, 12, 4, True*, None, 0, 0, 0, nn.LayerNorm, None, 2, False
         super().__init__()
         self.num_classes = num_classes
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
@@ -169,7 +169,7 @@ class PretrainVisionTransformer(nn.Module):
                  patch_size=16, 
                  encoder_in_chans=3, 
                  encoder_num_classes=0, 
-                 encoder_embed_dim=768, # 384
+                 encoder_embed_dim=768,
                  encoder_depth=12,
                  encoder_num_heads=12, 
                  decoder_num_classes=1536, # 1536 # (X) decoder_num_classes=768, 
@@ -195,7 +195,7 @@ class PretrainVisionTransformer(nn.Module):
             patch_size=patch_size, # 16
             in_chans=encoder_in_chans, # 3
             num_classes=encoder_num_classes, # 0
-            embed_dim=encoder_embed_dim, # 384
+            embed_dim=encoder_embed_dim, # 768
             depth=encoder_depth, # 12
             num_heads=encoder_num_heads, # 12 
             mlp_ratio=mlp_ratio, # 4
@@ -226,7 +226,7 @@ class PretrainVisionTransformer(nn.Module):
             init_values=init_values, # 0
             tubelet_size=tubelet_size) # 2
 
-        self.encoder_to_decoder = nn.Linear(encoder_embed_dim, decoder_embed_dim, bias=False) # 384,384
+        self.encoder_to_decoder = nn.Linear(encoder_embed_dim, decoder_embed_dim, bias=False) # 768,384
 
         self.mask_token = nn.Parameter(torch.zeros(1, 1, decoder_embed_dim)) # 1,1,384
 
