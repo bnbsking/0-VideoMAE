@@ -256,7 +256,7 @@ class VisionTransformer(nn.Module):
     def forward_features(self, x):
         x = self.patch_embed(x)
         B, _, _ = x.size()
-
+        
         if self.pos_embed is not None:
             x = x + self.pos_embed.expand(B, -1, -1).type_as(x).to(x.device).clone().detach()
         x = self.pos_drop(x)
