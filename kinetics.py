@@ -19,34 +19,34 @@ class VideoClsDataset(Dataset):
                  frame_sample_rate=2, crop_size=224, short_side_size=256,
                  new_height=256, new_width=340, keep_aspect_ratio=True,
                  num_segment=1, num_crop=1, test_num_segment=10, test_num_crop=3,args=None):
-        self.anno_path = anno_path
-        self.data_path = data_path
-        self.mode = mode
-        self.clip_len = clip_len
-        self.frame_sample_rate = frame_sample_rate
-        self.crop_size = crop_size
-        self.short_side_size = short_side_size
-        self.new_height = new_height
-        self.new_width = new_width
-        self.keep_aspect_ratio = keep_aspect_ratio
-        self.num_segment = num_segment
-        self.test_num_segment = test_num_segment
-        self.num_crop = num_crop
-        self.test_num_crop = test_num_crop
+        self.anno_path = anno_path # path/to/train.csv
+        self.data_path = data_path # /
+        self.mode = mode           # train
+        self.clip_len = clip_len   # 16
+        self.frame_sample_rate = frame_sample_rate # 4
+        self.crop_size = crop_size                 # 224
+        self.short_side_size = short_side_size     # 224
+        self.new_height = new_height               # 256
+        self.new_width = new_width                 # 320
+        self.keep_aspect_ratio = keep_aspect_ratio # True
+        self.num_segment = num_segment             # 1
+        self.test_num_segment = test_num_segment   # 5
+        self.num_crop = num_crop                   # 1
+        self.test_num_crop = test_num_crop         # 3
         self.args = args
         self.aug = False
         self.rand_erase = False
         if self.mode in ['train']:
             self.aug = True
-            if self.args.reprob > 0:
+            if self.args.reprob > 0: # 0.25
                 self.rand_erase = True
         if VideoReader is None:
             raise ImportError("Unable to import `decord` which is required to read videos.")
 
         import pandas as pd
         cleaned = pd.read_csv(self.anno_path, header=None, delimiter=' ')
-        self.dataset_samples = list(cleaned.values[:, 0])
-        self.label_array = list(cleaned.values[:, 1])
+        self.dataset_samples = list(cleaned.values[:, 0]) # [path,...]
+        self.label_array = list(cleaned.values[:, 1]) # [cls,...]
 
         if (mode == 'train'):
             pass
@@ -85,7 +85,7 @@ class VideoClsDataset(Dataset):
             scale_t = 1
 
             sample = self.dataset_samples[index]
-            buffer = self.loadvideo_decord(sample, sample_rate_scale=scale_t) # T H W C
+            buffer = self.loadvideo_decord(sample, sample_rate_scale=scale_t) # T H W C # np.array, (16,180,320,3), 0~255
             if len(buffer) == 0:
                 while len(buffer) == 0:
                     warnings.warn("video {} not correctly loaded during training".format(sample))
@@ -93,7 +93,7 @@ class VideoClsDataset(Dataset):
                     sample = self.dataset_samples[index]
                     buffer = self.loadvideo_decord(sample, sample_rate_scale=scale_t)
 
-            if args.num_sample > 1:
+            if args.num_sample > 1: # False
                 frame_list = []
                 label_list = []
                 index_list = []
@@ -105,7 +105,7 @@ class VideoClsDataset(Dataset):
                     index_list.append(index)
                 return frame_list, label_list, index_list, {}
             else:
-                buffer = self._aug_frame(buffer, args)
+                buffer = self._aug_frame(buffer, args) # torch.tensor, (3,16,224,224), 0~1
             
             return buffer, self.label_array[index], index, {}
 
@@ -161,12 +161,12 @@ class VideoClsDataset(Dataset):
         self,
         buffer,
         args,
-    ):
+    ): # T H W C # np.array, (16,180,320,3), 0~255 -->-->--> torch.tensor, (3,16,224,224), 0~1
 
         aug_transform = video_transforms.create_random_augment(
-            input_size=(self.crop_size, self.crop_size),
-            auto_augment=args.aa,
-            interpolation=args.train_interpolation,
+            input_size=(self.crop_size, self.crop_size), # 224,224
+            auto_augment=args.aa,                        # rand-m7-n4-mstd0.5-inc1
+            interpolation=args.train_interpolation,      # bicubic
         )
 
         buffer = [
@@ -219,7 +219,7 @@ class VideoClsDataset(Dataset):
         return buffer
 
 
-    def loadvideo_decord(self, sample, sample_rate_scale=1):
+    def loadvideo_decord(self, sample, sample_rate_scale=1): # path/to/video,1
         """Load video content using Decord"""
         fname = sample
 
@@ -232,7 +232,7 @@ class VideoClsDataset(Dataset):
             return []
         try:
             if self.keep_aspect_ratio:
-                vr = VideoReader(fname, num_threads=1, ctx=cpu(0))
+                vr = VideoReader(fname, num_threads=1, ctx=cpu(0)) # decord.video_reader.VideoReader # 180 (frames)
             else:
                 vr = VideoReader(fname, width=self.new_width, height=self.new_height,
                                  num_threads=1, ctx=cpu(0))
@@ -249,8 +249,8 @@ class VideoClsDataset(Dataset):
             return buffer
 
         # handle temporal segments
-        converted_len = int(self.clip_len * self.frame_sample_rate)
-        seg_len = len(vr) // self.num_segment
+        converted_len = int(self.clip_len * self.frame_sample_rate) # 16*4=64
+        seg_len = len(vr) // self.num_segment # 180/1=180
 
         all_index = []
         for i in range(self.num_segment):
@@ -262,11 +262,11 @@ class VideoClsDataset(Dataset):
                 end_idx = np.random.randint(converted_len, seg_len)
                 str_idx = end_idx - converted_len
                 index = np.linspace(str_idx, end_idx, num=self.clip_len)
-                index = np.clip(index, str_idx, end_idx - 1).astype(np.int64)
+                index = np.clip(index, str_idx, end_idx - 1).astype(np.int64) # clip all elements to the interval
             index = index + i*seg_len
             all_index.extend(list(index))
 
-        all_index = all_index[::int(sample_rate_scale)]
+        all_index = all_index[::int(sample_rate_scale)] # e.g. [44,48,52,56,61,65,69,73,78,82,86,90,95,99,103,107] # len=16
         vr.seek(0)
         buffer = vr.get_batch(all_index).asnumpy()
         return buffer
