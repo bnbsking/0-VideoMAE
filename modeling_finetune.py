@@ -176,7 +176,7 @@ class VisionTransformer(nn.Module):
                  img_size=224,
                  patch_size=16, 
                  in_chans=3, 
-                 num_classes=1000, # ? 
+                 num_classes=1000, # 2
                  embed_dim=768,
                  depth=12,
                  num_heads=12,
@@ -185,11 +185,11 @@ class VisionTransformer(nn.Module):
                  qk_scale=None,
                  drop_rate=0.,
                  attn_drop_rate=0.,
-                 drop_path_rate=0., 
+                 drop_path_rate=0., # 0.1
                  norm_layer=nn.LayerNorm, 
                  init_values=0.,
                  use_learnable_pos_emb=False, #partial(nn.LayerNorm, eps=1e-6), **kwargs)
-                 init_scale=0.,
+                 init_scale=0., # 0.001
                  all_frames=16,
                  tubelet_size=2,
                  use_mean_pooling=True):
@@ -199,13 +199,13 @@ class VisionTransformer(nn.Module):
         self.tubelet_size = tubelet_size
         self.patch_embed = PatchEmbed(
             img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim, num_frames=all_frames, tubelet_size=self.tubelet_size)
-        num_patches = self.patch_embed.num_patches
+        num_patches = self.patch_embed.num_patches # 1568
 
         if use_learnable_pos_emb:
             self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim))
         else:
             # sine-cosine positional embeddings is on the way
-            self.pos_embed = get_sinusoid_encoding_table(num_patches, embed_dim)
+            self.pos_embed = get_sinusoid_encoding_table(num_patches, embed_dim) # 1,1568,768
 
         self.pos_drop = nn.Dropout(p=drop_rate)
 
@@ -215,7 +215,7 @@ class VisionTransformer(nn.Module):
             Block(
                 dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
                 drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer,
-                init_values=init_values)
+                init_values=init_values) # 768,12,4,True,None,0,0,0.1,partial,0.01
             for i in range(depth)])
         self.norm = nn.Identity() if use_mean_pooling else norm_layer(embed_dim)
         self.fc_norm = norm_layer(embed_dim) if use_mean_pooling else None
