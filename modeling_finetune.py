@@ -57,13 +57,13 @@ class Attention(nn.Module):
             proj_drop=0., attn_head_dim=None):
         super().__init__()
         self.num_heads = num_heads
-        head_dim = dim // num_heads # 384/12=32
+        head_dim = dim // num_heads # 768/12=64
         if attn_head_dim is not None:
             head_dim = attn_head_dim
-        all_head_dim = head_dim * self.num_heads
+        all_head_dim = head_dim * self.num_heads # 64*12=768
         self.scale = qk_scale or head_dim ** -0.5
 
-        self.qkv = nn.Linear(dim, all_head_dim * 3, bias=False) # (384,32*3=96)
+        self.qkv = nn.Linear(dim, all_head_dim * 3, bias=False) # (768,768*3=2304)
         if qkv_bias:
             self.q_bias = nn.Parameter(torch.zeros(all_head_dim))
             self.v_bias = nn.Parameter(torch.zeros(all_head_dim))
@@ -102,7 +102,7 @@ class Block(nn.Module):
 
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path=0., init_values=None, act_layer=nn.GELU, norm_layer=nn.LayerNorm,
-                 attn_head_dim=None): # 384, 12, 4, True, None, 0, 0, 0, nn.LayerNorm, None
+                 attn_head_dim=None): # 768, 12, 4, True, None, 0, 0, 0, nn.LayerNorm, None
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = Attention(
@@ -144,7 +144,7 @@ class PatchEmbed(nn.Module):
         self.num_patches = num_patches
         self.proj = nn.Conv3d(in_channels=in_chans, out_channels=embed_dim, 
                             kernel_size = (self.tubelet_size,  patch_size[0],patch_size[1]),
-                            stride=(self.tubelet_size,  patch_size[0],  patch_size[1])) # channel 3->384 # kernel=stride=(2,16,16)
+                            stride=(self.tubelet_size,  patch_size[0],  patch_size[1])) # channel 3->768 # kernel=stride=(2,16,16)
 
     def forward(self, x, **kwargs):
         B, C, T, H, W = x.shape # B,3,16,224,224
@@ -156,7 +156,7 @@ class PatchEmbed(nn.Module):
     
 # sin-cos position encoding
 # https://github.com/jadore801120/attention-is-all-you-need-pytorch/blob/master/transformer/Models.py#L31
-def get_sinusoid_encoding_table(n_position, d_hid): # 196,384
+def get_sinusoid_encoding_table(n_position, d_hid): # 196,768
     ''' Sinusoid position encoding table ''' 
     # TODO: make it with torch instead of numpy 
     def get_position_angle_vec(position): 
