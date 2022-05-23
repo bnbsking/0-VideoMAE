@@ -478,7 +478,7 @@ class RandAugment:
         return img
 
 
-def rand_augment_transform(config_str, hparams):
+def rand_augment_transform(config_str, hparams): # rand-m7-n4-mstd0.5-inc1, {"translate_const":100,"interpolation":bicubic*}
     """
     RandAugment: Practical automated data augmentation... - https://arxiv.org/abs/1909.13719
 
