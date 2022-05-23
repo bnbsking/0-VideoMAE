@@ -230,7 +230,7 @@ class PretrainVisionTransformer(nn.Module):
 
         self.mask_token = nn.Parameter(torch.zeros(1, 1, decoder_embed_dim)) # 1,1,384
 
-        self.pos_embed = get_sinusoid_encoding_table(self.encoder.patch_embed.num_patches, decoder_embed_dim) # 
+        self.pos_embed = get_sinusoid_encoding_table(self.encoder.patch_embed.num_patches, decoder_embed_dim) # (1,1568,384)
 
         trunc_normal_(self.mask_token, std=.02)
 
@@ -253,11 +253,12 @@ class PretrainVisionTransformer(nn.Module):
 
     def forward(self, x, mask): # (B,3,16,224,224), (B,1568)
         _, _, T, _, _ = x.shape
-        x_vis = self.encoder(x, mask) # [B, N_vis, C_e] # 
-        x_vis = self.encoder_to_decoder(x_vis) # [B, N_vis, C_d]
+        x_vis = self.encoder(x, mask) # [B, N_vis, C_e] # (B,160,768)
+        x_vis = self.encoder_to_decoder(x_vis) # [B, N_vis, C_d] # (B,160,384)
         B, N, C = x_vis.shape
         # we don't unshuffle the correct visible token order, 
         # but shuffle the pos embedding accorddingly.
+        # e.g. [[1], [2], [3]] --.expand(3,4)--> [[1,1,1,1], [2,2,2,2], [3,3,3,3]] # this case (1,1568,384) -> (B,1568,384)
         expand_pos_embed = self.pos_embed.expand(B, -1, -1).type_as(x).to(x.device).clone().detach()
         pos_emd_vis = expand_pos_embed[~mask].reshape(B, -1, C)
         pos_emd_mask = expand_pos_embed[mask].reshape(B, -1, C)
