@@ -315,7 +315,7 @@ def main(args, ds_init):
     args.window_size = (args.num_frames // 2, args.input_size // patch_size[0], args.input_size // patch_size[1])
     args.patch_size = patch_size
 
-    if args.finetune:
+    if args.finetune: # pretrain weight path
         if args.finetune.startswith('https'):
             checkpoint = torch.hub.load_state_dict_from_url(
                 args.finetune, map_location='cpu', check_hash=True)
