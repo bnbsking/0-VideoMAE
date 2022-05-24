@@ -288,13 +288,13 @@ def main(args, ds_init):
         data_loader_test = None
 
     mixup_fn = None
-    mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
-    if mixup_active:
+    mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None # True # args.mixup=0.8
+    if mixup_active: # True
         print("Mixup is activated!")
         mixup_fn = Mixup(
             mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
             prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
-            label_smoothing=args.smoothing, num_classes=args.nb_classes)
+            label_smoothing=args.smoothing, num_classes=args.nb_classes) # 0.8,1,None,1,0.5,batch,0.1,2
 
     model = create_model(
         args.model,
@@ -324,12 +324,12 @@ def main(args, ds_init):
 
         print("Load ckpt from %s" % args.finetune)
         checkpoint_model = None
-        for model_key in args.model_key.split('|'):
+        for model_key in args.model_key.split('|'): # "model|module"
             if model_key in checkpoint:
                 checkpoint_model = checkpoint[model_key]
                 print("Load state_dict by model_key = %s" % model_key)
                 break
-        if checkpoint_model is None:
+        if checkpoint_model is None: # False # checkpoint_model = ori_model.state_dict()
             checkpoint_model = checkpoint
         state_dict = model.state_dict()
         for k in ['head.weight', 'head.bias']:
@@ -342,14 +342,14 @@ def main(args, ds_init):
         for key in all_keys:
             if key.startswith('backbone.'):
                 new_dict[key[9:]] = checkpoint_model[key]
-            elif key.startswith('encoder.'):
+            elif key.startswith('encoder.'): # remove encoder prefix
                 new_dict[key[8:]] = checkpoint_model[key]
             else:
-                new_dict[key] = checkpoint_model[key]
+                new_dict[key] = checkpoint_model[key] # others are kept
         checkpoint_model = new_dict
 
         # interpolate position embedding
-        if 'pos_embed' in checkpoint_model:
+        if 'pos_embed' in checkpoint_model: # False
             pos_embed_checkpoint = checkpoint_model['pos_embed']
             embedding_size = pos_embed_checkpoint.shape[-1] # channel dim
             num_patches = model.patch_embed.num_patches # 
@@ -376,12 +376,12 @@ def main(args, ds_init):
                 new_pos_embed = torch.cat((extra_tokens, pos_tokens), dim=1)
                 checkpoint_model['pos_embed'] = new_pos_embed
 
-        utils.load_state_dict(model, checkpoint_model, prefix=args.model_prefix)
+        utils.load_state_dict(model, checkpoint_model, prefix=args.model_prefix) # checkpoint_model:state_dict of pretrained model # prefix=""
 
     model.to(device)
 
-    model_ema = None
-    if args.model_ema:
+    model_ema = None 
+    if args.model_ema: # False
         model_ema = ModelEma(
             model,
             decay=args.model_ema_decay,
@@ -402,12 +402,12 @@ def main(args, ds_init):
     args.warmup_lr = args.warmup_lr * total_batch_size / 256
     print("LR = %.8f" % args.lr)
     print("Batch size = %d" % total_batch_size)
-    print("Update frequent = %d" % args.update_freq)
+    print("Update frequent = %d" % args.update_freq) # 1
     print("Number of training examples = %d" % len(dataset_train))
     print("Number of training training per epoch = %d" % num_training_steps_per_epoch)
 
     num_layers = model_without_ddp.get_num_layers()
-    if args.layer_decay < 1.0:
+    if args.layer_decay < 1.0: # True # 0.75
         assigner = LayerDecayValueAssigner(list(args.layer_decay ** (num_layers + 1 - i) for i in range(num_layers + 2)))
     else:
         assigner = None
@@ -452,7 +452,7 @@ def main(args, ds_init):
         args.weight_decay, args.weight_decay_end, args.epochs, num_training_steps_per_epoch)
     print("Max WD = %.7f, Min WD = %.7f" % (max(wd_schedule_values), min(wd_schedule_values)))
 
-    if mixup_fn is not None:
+    if mixup_fn is not None: # True
         # smoothing is handled with mixup label transform
         criterion = SoftTargetCrossEntropy()
     elif args.smoothing > 0.:
