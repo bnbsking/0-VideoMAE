@@ -290,7 +290,7 @@ def init_distributed_mode(args):
     setup_for_distributed(args.rank == 0)
 
 
-def load_state_dict(model, state_dict, prefix='', ignore_missing="relative_position_index"):
+def load_state_dict(model, state_dict, prefix='', ignore_missing="relative_position_index"): #checkpoint_model:state_dict of pretrained model #prefix=""
     missing_keys = []
     unexpected_keys = []
     error_msgs = []
@@ -302,9 +302,9 @@ def load_state_dict(model, state_dict, prefix='', ignore_missing="relative_posit
     def load(module, prefix=''):
         local_metadata = {} if metadata is None else metadata.get(
             prefix[:-1], {})
-        module._load_from_state_dict(
+        module._load_from_state_dict( # compare the version number and do appropriate changes if the state dict is from before the change
             state_dict, prefix, local_metadata, True, missing_keys, unexpected_keys, error_msgs)
-        for name, child in module._modules.items():
+        for name, child in module._modules.items(): # load submodules recusrively e.g. attn, attn.qkv
             if child is not None:
                 load(child, prefix + name + '.')
 
