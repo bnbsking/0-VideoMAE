@@ -150,12 +150,12 @@ class PretrainVisionTransformerDecoder(nn.Module):
         self.num_classes = num_classes
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
-    def forward(self, x, return_token_num):
-        for blk in self.blocks:
+    def forward(self, x, return_token_num): # (B,F=1568,C=384), 1408
+        for blk in self.blocks: # B,1568,384
             x = blk(x)
 
         if return_token_num > 0:
-            x = self.head(self.norm(x[:, -return_token_num:])) # only return the mask tokens predict pixels
+            x = self.head(self.norm(x[:, -return_token_num:])) # only return the mask tokens predict pixels # B,1408,1536
         else:
             x = self.head(self.norm(x))
 
