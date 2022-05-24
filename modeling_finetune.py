@@ -253,26 +253,26 @@ class VisionTransformer(nn.Module):
         self.num_classes = num_classes
         self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
-    def forward_features(self, x):
-        x = self.patch_embed(x)
+    def forward_features(self, x): # B,3,16,224,224
+        x = self.patch_embed(x) # B,1568,768
         B, _, _ = x.size()
         
         if self.pos_embed is not None:
             x = x + self.pos_embed.expand(B, -1, -1).type_as(x).to(x.device).clone().detach()
-        x = self.pos_drop(x)
+        x = self.pos_drop(x) # dropout rate = 0 # B,1568,768
 
-        for blk in self.blocks:
+        for blk in self.blocks: # B,1568,768
             x = blk(x)
 
         x = self.norm(x)
-        if self.fc_norm is not None:
-            return self.fc_norm(x.mean(1))
+        if self.fc_norm is not None: # True
+            return self.fc_norm(x.mean(1)) # B,768 # mean along axis-1 so 1568 dimension is vanished
         else:
             return x[:, 0]
 
-    def forward(self, x):
-        x = self.forward_features(x)
-        x = self.head(x)
+    def forward(self, x): # B,3,16,224,224
+        x = self.forward_features(x) # B,768
+        x = self.head(x) # B,2
         return x
 
 @register_model
