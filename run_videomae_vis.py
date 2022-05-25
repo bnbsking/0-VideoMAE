@@ -79,23 +79,23 @@ def get_model(args):
         pretrained=False,
         drop_path_rate=args.drop_path,
         drop_block_rate=None,
-        decoder_depth=args.decoder_depth
+        decoder_depth=args.decoder_depth # 4
     )
 
     return model
 
 
 def main(args):
-    print(args)
+    print(args); import json; json.dump( vars(args), open(f"{args.save_path}/args.json","w") ); raise
 
     device = torch.device(args.device)
     cudnn.benchmark = True
 
-    model = get_model(args)
-    patch_size = model.encoder.patch_embed.patch_size
+    model = get_model(args) # same as pretrain
+    patch_size = model.encoder.patch_embed.patch_size # 16
     print("Patch size = %s" % str(patch_size))
-    args.window_size = (args.num_frames // 2, args.input_size // patch_size[0], args.input_size // patch_size[1])
-    args.patch_size = patch_size
+    args.window_size = (args.num_frames // 2, args.input_size // patch_size[0], args.input_size // patch_size[1]) # (16/2,224/16,224/16)=(8,14,14)
+    args.patch_size = patch_size # 16
 
     model.to(device)
     checkpoint = torch.load(args.model_path, map_location='cpu')
@@ -107,15 +107,15 @@ def main(args):
 
     with open(args.img_path, 'rb') as f:
         vr = VideoReader(f, ctx=cpu(0))
-    duration = len(vr)
+    duration = len(vr) # frames of the video
     new_length  = 1 
     new_step = 1
-    skip_length = new_length * new_step
+    skip_length = new_length * new_step # 1
     # frame_id_list = [1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57, 61]
 
     
     tmp = np.arange(0,32, 2) + 60
-    frame_id_list = tmp.tolist()
+    frame_id_list = tmp.tolist() # [60,62,64,...,90] # len=32
     # average_duration = (duration - skip_length + 1) // args.num_frames
     # if average_duration > 0:
     #     frame_id_list = np.multiply(list(range(args.num_frames)),
@@ -123,16 +123,14 @@ def main(args):
     #     frame_id_list = frame_id_list + np.random.randint(average_duration,
     #                                             size=args.num_frames)
 
-    video_data = vr.get_batch(frame_id_list).asnumpy()
-    print(video_data.shape)
-    img = [Image.fromarray(video_data[vid, :, :, :]).convert('RGB') for vid, _ in enumerate(frame_id_list)]
+    video_data = vr.get_batch(frame_id_list).asnumpy() # 16,320,180,3
+    img = [Image.fromarray(video_data[vid, :, :, :]).convert('RGB') for vid, _ in enumerate(frame_id_list)] # list[PIL] # len=16 # size=(180,320)
 
     transforms = DataAugmentationForVideoMAE(args)
-    img, bool_masked_pos = transforms((img, None)) # T*C,H,W
-    # print(img.shape)
-    img = img.view((args.num_frames , 3) + img.size()[-2:]).transpose(0,1) # T*C,H,W -> T,C,H,W -> C,T,H,W
+    img, bool_masked_pos = transforms((img, None)) # T*C,H,W  # (48,224,224), (1568,)
+    img = img.view((args.num_frames , 3) + img.size()[-2:]).transpose(0,1) # T*C,H,W -> T,C,H,W -> C,T,H,W # (3,16,224,224)
     # img = img.view(( -1 , args.num_frames) + img.size()[-2:]) 
-    bool_masked_pos = torch.from_numpy(bool_masked_pos)
+    bool_masked_pos = torch.from_numpy(bool_masked_pos) # (1568,) # 1408:1 160:0
 
     with torch.no_grad():
         # img = img[None, :]
@@ -142,8 +140,8 @@ def main(args):
         bool_masked_pos = bool_masked_pos.unsqueeze(0)
         
         img = img.to(device, non_blocking=True)
-        bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
-        outputs = model(img, bool_masked_pos)
+        bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool) # shape unchange
+        outputs = model(img, bool_masked_pos) # (1,3,16,224,224),(1,1568) -> # (1,1408,1536)
 
         #save original video
         mean = torch.as_tensor(IMAGENET_DEFAULT_MEAN).to(device)[None, :, None, None, None]
