@@ -202,6 +202,10 @@ def get_args():
 
 
 def main(args, ds_init):
+    if True:
+        args.num_workers = 1
+        args.eval = True
+        args.batch_size = 1 if args.eval else args.batch_size
     utils.init_distributed_mode(args)
 
     if ds_init is not None:
@@ -467,6 +471,12 @@ def main(args, ds_init):
         optimizer=optimizer, loss_scaler=loss_scaler, model_ema=model_ema)
 
     if args.eval:
+        if True:
+            from engine_for_finetuning import my_eval
+            test_stats, resultL = my_eval(data_loader_val, model, device)
+            print(f"Accuracy of the network on the {len(dataset_val)} val videos: {test_stats['acc1']:.1f}%")
+            json.dump(resultL,open(f"{args.output_dir}/result.json","w"))
+            exit(0)
         preds_file = os.path.join(args.output_dir, str(global_rank) + '.txt')
         test_stats = final_test(data_loader_test, model, device, preds_file)
         torch.distributed.barrier()
