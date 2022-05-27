@@ -145,6 +145,8 @@ def build_dataset(is_train, test_mode, args): # True, False, args
             new_width=320,
             args=args)
         nb_classes = 101
+        if True:
+            nb_classes = 2
     
     elif args.data_set == 'HMDB51':
         mode = None
