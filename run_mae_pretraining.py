@@ -209,11 +209,11 @@ def main(args):
     lr_schedule_values = utils.cosine_scheduler(
         args.lr, args.min_lr, args.epochs, num_training_steps_per_epoch,
         warmup_epochs=args.warmup_epochs, warmup_steps=args.warmup_steps,
-    )
-    if args.weight_decay_end is None:
+    ) # np.array # len=steps=data//bz*ep # linear growth if ep<warup_ep else cos(0)->cos(pi)
+    if args.weight_decay_end is None: # True # since args.weight_decay_end=None 
         args.weight_decay_end = args.weight_decay
     wd_schedule_values = utils.cosine_scheduler(
-        args.weight_decay, args.weight_decay_end, args.epochs, num_training_steps_per_epoch)
+        args.weight_decay, args.weight_decay_end, args.epochs, num_training_steps_per_epoch) # args.weight_decay_end=0.05
     print("Max WD = %.7f, Min WD = %.7f" % (max(wd_schedule_values), min(wd_schedule_values)))
 
     utils.auto_load_model(
