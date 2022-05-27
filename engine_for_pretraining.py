@@ -24,10 +24,10 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
         # assign learning rate & weight decay for each step
         it = start_steps + step  # global training iteration
         if lr_schedule_values is not None or wd_schedule_values is not None:
-            for i, param_group in enumerate(optimizer.param_groups):
+            for i, param_group in enumerate(optimizer.param_groups): # 0:0-decay # 1:0.05-decay
                 if lr_schedule_values is not None:
-                    param_group["lr"] = lr_schedule_values[it] * param_group["lr_scale"]
-                if wd_schedule_values is not None and param_group["weight_decay"] > 0:
+                    param_group["lr"] = lr_schedule_values[it] * param_group["lr_scale"] # param_group["lr_scale"]=1 always
+                if wd_schedule_values is not None and param_group["weight_decay"] > 0: # True
                     param_group["weight_decay"] = wd_schedule_values[it]
 
         videos, bool_masked_pos = batch # (B,3,16,224,224), (B,1568)
