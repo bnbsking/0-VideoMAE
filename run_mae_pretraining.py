@@ -202,7 +202,7 @@ def main(args):
         model_without_ddp = model.module
 
     optimizer = create_optimizer(
-        args, model_without_ddp) # adam
+        args, model_without_ddp) # include args.weight_decay=0.05 # torch.optim.AdamW(weight_decay=0.05)
     loss_scaler = NativeScaler() # torch.cuda.amp.GradScaler() # https://pytorch.org/docs/stable/notes/amp_examples.html
 
     print("Use step level LR & WD scheduler!")
