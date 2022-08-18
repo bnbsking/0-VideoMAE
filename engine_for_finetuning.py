@@ -189,7 +189,7 @@ if True:
             with torch.cuda.amp.autocast():
                 output = model(videos)
                 loss = criterion(output, target)
-            resultL.append( int(output.argmax(axis=1)[0].cpu()) ) # self-defined
+            resultL.append( [ float(ele) for ele in output.softmax(axis=1).squeeze().detach().cpu().numpy() ] ) # self-defined
             acc1, acc5 = accuracy(output, target, topk=(1, 2)) # (1,5)
             batch_size = videos.shape[0]
             metric_logger.update(loss=loss.item())
