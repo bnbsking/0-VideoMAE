@@ -29,5 +29,6 @@ python run_class_finetuning.py \
     --test_num_crop 3 \
     --mixup 0 \
     --cutmix 0 \
-    --smoothing 0
+    --smoothing 0 \
+    #--eval
     #--enable_deepspeed
