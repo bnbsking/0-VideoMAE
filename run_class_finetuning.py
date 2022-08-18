@@ -202,10 +202,10 @@ def get_args():
 
 
 def main(args, ds_init):
-    if True:
+    if args.eval:
         args.num_workers = 1
-        args.eval = True
-        args.batch_size = 1 if args.eval else args.batch_size
+        args.batch_size = 1
+        args.auto_resume=False
     utils.init_distributed_mode(args)
 
     if ds_init is not None:
