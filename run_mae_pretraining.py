@@ -210,6 +210,16 @@ def main(args):
         args.lr, args.min_lr, args.epochs, num_training_steps_per_epoch,
         warmup_epochs=args.warmup_epochs, warmup_steps=args.warmup_steps,
     ) # np.array # len=steps=data//bz*ep # linear growth if ep<warup_ep else cos(0)->cos(pi)
+    if True:
+        from math import cos, pi
+        #json.dump(list(lr_schedule_values), open("./_code/lr_pretext.json","w")); raise
+        r = 0.9
+        L = lr_schedule_values
+        steps1 = int(L.argmax())
+        steps2 = int((len(L)-steps1)*r)
+        steps3 = len(L)-steps1-steps2
+        lr_schedule_values = np.concatenate( (L[:steps1], np.array([L.max()]*steps2), np.array([ L.max()*0.5 + 0.5*L.max()*cos(pi*i/steps3) for i in range(steps3)])) )
+    
     if args.weight_decay_end is None: # True # since args.weight_decay_end=None 
         args.weight_decay_end = args.weight_decay
     wd_schedule_values = utils.cosine_scheduler(

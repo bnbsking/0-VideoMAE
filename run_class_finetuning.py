@@ -211,7 +211,7 @@ def main(args, ds_init):
     if ds_init is not None:
         utils.create_ds_config(args)
 
-    print(args)
+    print(args); import json; json.dump( vars(args), open(f"{args.output_dir}/args{'_eval' if args.eval else ''}.json","w") )#; raise
 
     device = torch.device(args.device)
 
@@ -396,7 +396,7 @@ def main(args, ds_init):
     model_without_ddp = model
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-    print("Model = %s" % str(model_without_ddp))
+    #print("Model = %s" % str(model_without_ddp))
     print('number of params:', n_parameters)
 
     total_batch_size = args.batch_size * args.update_freq * utils.get_world_size()
@@ -422,7 +422,7 @@ def main(args, ds_init):
     skip_weight_decay_list = model.no_weight_decay()
     print("Skip weight decay list: ", skip_weight_decay_list)
 
-    if args.enable_deepspeed:
+    if args.enable_deepspeed: # False
         loss_scaler = None
         optimizer_params = get_parameter_groups(
             model, args.weight_decay, skip_weight_decay_list,
@@ -473,6 +473,9 @@ def main(args, ds_init):
         criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
     else:
         criterion = torch.nn.CrossEntropyLoss()
+        if True:
+            data = 1/np.array([44,49,51,1354])
+            criterion = torch.nn.CrossEntropyLoss( torch.Tensor(data/data.sum()).to('cuda') )
 
     print("criterion = %s" % str(criterion))
 
