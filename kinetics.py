@@ -11,6 +11,7 @@ from decord import VideoReader, cpu
 from torch.utils.data import Dataset
 import video_transforms as video_transforms 
 import volume_transforms as volume_transforms
+import glob, json, cv2
 
 class VideoClsDataset(Dataset):
     """Load your own video classification dataset."""
@@ -78,14 +79,29 @@ class VideoClsDataset(Dataset):
                         self.test_label_array.append(sample_label)
                         self.test_dataset.append(self.dataset_samples[idx])
                         self.test_seg.append((ck, cp))
-
+        
+        self.useSpecial=True # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if self.useSpecial:
+            imgFolder= "/home/jovyan/data-vol-1/VideoMAE/_data/20220810/imgs"
+            imgPathL = sorted(glob.glob(f"{imgFolder}/*.jpg"))      # idx2path
+            imgPathD = dict( zip( imgPathL,range(len(imgPathL)) ) ) # path2idx
+            f = self.clip_len # =num_frames=16
+            self.videoL = [ [ imgPathL[imgPathD[imgPath]+i] for i in range(f) ] for imgPath in self.dataset_samples ]
+            if len(self.videoL[-1])<f:
+                self.videoL.pop()
+            json.dump(self.videoL, open(f"{imgFolder}/downstream_stack.json","w"))
+            self.dataset_samples = [f"example_{i}" for i in range(len(self.videoL))]
+        
     def __getitem__(self, index):
         if self.mode == 'train':
             args = self.args 
             scale_t = 1
 
             sample = self.dataset_samples[index]
-            buffer = self.loadvideo_decord(sample, sample_rate_scale=scale_t) # T H W C # np.array, (16,180,320,3), 0~255
+            if self.useSpecial: # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                buffer = np.array([ cv2.imread(imgPath) for imgPath in self.videoL[index] ])
+            else:
+                buffer = self.loadvideo_decord(sample, sample_rate_scale=scale_t) # T H W C # np.array, (16,180,320,3), 0~255
             if len(buffer) == 0:
                 while len(buffer) == 0:
                     warnings.warn("video {} not correctly loaded during training".format(sample))
@@ -111,7 +127,10 @@ class VideoClsDataset(Dataset):
 
         elif self.mode == 'validation':
             sample = self.dataset_samples[index]
-            buffer = self.loadvideo_decord(sample)
+            if self.useSpecial: # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                buffer = np.array([ cv2.imread(imgPath) for imgPath in self.videoL[index] ])
+            else:
+                buffer = self.loadvideo_decord(sample) 
             if len(buffer) == 0:
                 while len(buffer) == 0:
                     warnings.warn("video {} not correctly loaded during validation".format(sample))
@@ -268,10 +287,28 @@ class VideoClsDataset(Dataset):
 
         all_index = all_index[::int(sample_rate_scale)] # e.g. [44,48,52,56,61,65,69,73,78,82,86,90,95,99,103,107] # len=16
         vr.seek(0)
-        buffer = vr.get_batch(all_index).asnumpy()
+        buffer = vr.get_batch(all_index).asnumpy() # (16,320,568,3)
         return buffer
+    
+#     def specialData(self): # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#         imgL = sorted(glob.glob(f"{self.dataset_samples[0]}/*.jpg"))
+#         divide = 2 # overlap degree
+#         f = self.clip_len # =num_frames=16
+#         self.videoL = [ imgL[i*f//divide:i*f//divide+f] for i in range(len(imgL)//f*divide) ]
+#         if len(self.videoL[-1])<f:
+#             self.videoL.pop()
+#         json.dump(self.videoL, open(f"{self.dataset_samples[0]}/../videos.json","w"))
+#         self.dataset_samples = [f"example_{i}" for i in range(len(self.videoL))]
+#         self.label_array = [0]*len(self.videoL)
+    
+#     def specialLoad(self, index): # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#         buffer = np.array([ cv2.imread(path) for path in self.videoL[index] ])
+#         #assert buffer.shape==(16,320,568,3), buffer.shape
+#         return buffer
 
     def __len__(self):
+        if self.useSpecial: # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            return len(self.videoL)
         if self.mode != 'test':
             return len(self.dataset_samples)
         else:
@@ -467,25 +504,39 @@ class VideoMAE(torch.utils.data.Dataset):
             if len(self.clips) == 0:
                 raise(RuntimeError("Found 0 video clips in subfolders of: " + root + "\n"
                                    "Check your data directory (opt.data-dir)."))
+        
+        self.useSpecial=True
+        if self.useSpecial: # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            imgL = [ imgPath for imgPath,label in self.clips ]
+            divide = 1 # overlap degree
+            f = self.new_length # =num_frames=16
+            self.videoL = [ imgL[i*f//divide:i*f//divide+f] for i in range(len(imgL)//f*divide) ]
+            if len(self.videoL[-1])<f:
+                self.videoL.pop()             
+            print(f"number of unlabled stack of images = {len(self.videoL)}")
+            json.dump(self.videoL, open( os.path.abspath(f"{imgL[0]}/../../stacks.json"),"w"))
 
     def __getitem__(self, index):
+        # # useSpecial !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#         directory, target = self.clips[index]
+#         if self.video_loader: # True
+#             if '.' in directory.split('/')[-1]:
+#                 # data in the "setting" file already have extension, e.g., demo.mp4
+#                 video_name = directory
+#             else:
+#                 # data in the "setting" file do not have extension, e.g., demo
+#                 # So we need to provide extension (i.e., .mp4) to complete the file name.
+#                 video_name = '{}.{}'.format(directory, self.video_ext)
 
-        directory, target = self.clips[index]
-        if self.video_loader: # True
-            if '.' in directory.split('/')[-1]:
-                # data in the "setting" file already have extension, e.g., demo.mp4
-                video_name = directory
-            else:
-                # data in the "setting" file do not have extension, e.g., demo
-                # So we need to provide extension (i.e., .mp4) to complete the file name.
-                video_name = '{}.{}'.format(directory, self.video_ext)
+#             decord_vr = decord.VideoReader(video_name, num_threads=1)
+#             duration = len(decord_vr)
 
-            decord_vr = decord.VideoReader(video_name, num_threads=1)
-            duration = len(decord_vr)
+#         segment_indices, skip_offsets = self._sample_train_indices(duration) # np.array([1~1+avgDur]), np.array([0,0,...]) shape=64 and all are zeros
 
-        segment_indices, skip_offsets = self._sample_train_indices(duration) # np.array([1~1+avgDur]), np.array([0,0,...]) shape=64 and all are zeros
-
-        images = self._video_TSN_decord_batch_loader(directory, decord_vr, duration, segment_indices, skip_offsets)
+        if self.useSpecial: # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            images = [ Image.open(imgPath) for imgPath in self.videoL[index] ]
+        else:
+            images = self._video_TSN_decord_batch_loader(directory, decord_vr, duration, segment_indices, skip_offsets)
         # List[PIL] # len=16 # PIL.shape=(320,240)
 
         process_data, mask = self.transform((images, None)) # T*C,H,W # [48,224,224], [1,0,...] len=1568
@@ -494,7 +545,10 @@ class VideoMAE(torch.utils.data.Dataset):
         return (process_data, mask) # shape=(3,16,224,224) # shape=(1568,)
 
     def __len__(self):
-        return len(self.clips)
+        if self.useSpecial: # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            return len(self.videoL)
+        else:
+            return len(self.clips)
 
     def _make_dataset(self, directory, setting):
         if not os.path.exists(setting):
