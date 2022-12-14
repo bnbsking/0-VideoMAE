@@ -82,14 +82,16 @@ class VideoClsDataset(Dataset):
         
         self.useSpecial=True # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if self.useSpecial:
-            imgFolder= "/home/jovyan/data-vol-1/VideoMAE/_data/20220810/imgs"
-            imgPathL = sorted(glob.glob(f"{imgFolder}/*.jpg"))      # idx2path
+            imgFolderL = ["/home/jovyan/data-vol-1/VideoMAE/_data/imgs/20220826"]
+            imgPathL = []                                           # idx2path
+            for imgFolder in imgFolderL:
+                imgPathL += sorted(glob.glob(f"{imgFolder}/*.jpg"))
             imgPathD = dict( zip( imgPathL,range(len(imgPathL)) ) ) # path2idx
             f = self.clip_len # =num_frames=16
             self.videoL = [ [ imgPathL[imgPathD[imgPath]+i] for i in range(f) ] for imgPath in self.dataset_samples ]
             if len(self.videoL[-1])<f:
                 self.videoL.pop()
-            json.dump(self.videoL, open(f"{imgFolder}/downstream_stack.json","w"))
+            json.dump(self.videoL, open(f"{imgFolderL[0]}/../../csvDownstream/downstreamStacks.json","w")) # for debugging
             self.dataset_samples = [f"example_{i}" for i in range(len(self.videoL))]
         
     def __getitem__(self, index):
@@ -514,7 +516,7 @@ class VideoMAE(torch.utils.data.Dataset):
             if len(self.videoL[-1])<f:
                 self.videoL.pop()             
             print(f"number of unlabled stack of images = {len(self.videoL)}")
-            json.dump(self.videoL, open( os.path.abspath(f"{imgL[0]}/../../stacks.json"),"w"))
+            json.dump(self.videoL, open( os.path.abspath(f"{imgL[0]}/../../../csvPretext/pretextStacks.json"),"w")) # for debugging
 
     def __getitem__(self, index):
         # # useSpecial !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
