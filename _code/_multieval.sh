@@ -1,6 +1,6 @@
 #!/bin/bash
-DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/downstream_0810_10'
-OUTPUT_DIR='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0810_10_lr4'
+DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/csvDownstream/20220826_v1'
+OUTPUT_DIR='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0826_v1'
 
 for FINETUNE_WEIGHT in $(ls $OUTPUT_DIR | grep checkpoint-1[0-9][0-9][0-9]); do 
     FINETUNE_WEIGHT=$OUTPUT_DIR/$FINETUNE_WEIGHT

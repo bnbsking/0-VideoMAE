@@ -1,11 +1,11 @@
 #!/bin/bash
-DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/downstream_0810_10_v2' # labeled
-#DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/pretext_0810_10' # unlabeled
+DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/csvDownstream/20220826_v1' # labeled
+#DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/csvPretext/20220826_v1' # unlabeled
 
-OUTPUT_DIR='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0810_10_v2'
+OUTPUT_DIR='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0826_v1'
 
-MODEL_PATH='/home/jovyan/data-vol-1/VideoMAE/_exps/pretext_0810_10_lr2/checkpoint-3199.pth' # finetune
-#MODEL_PATH='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0810_10_lr4/best/checkpoint-best.pth' # eval
+MODEL_PATH='/home/jovyan/data-vol-1/VideoMAE/_exps/pretext_0826_v1/checkpoint-3199.pth' # finetune
+#MODEL_PATH='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0826_v1/checkpoint-best.pth' # eval
 
 python run_class_finetuning.py \
     --model vit_base_patch16_224 \
