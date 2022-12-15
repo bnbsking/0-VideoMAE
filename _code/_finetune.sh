@@ -2,7 +2,8 @@
 DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/csvDownstream/20220826_v1' # labeled
 #DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/csvPretext/20220826_v1' # unlabeled
 
-OUTPUT_DIR='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0826_v1'
+OUTPUT_DIR='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0826_v1' # finetune
+#OUTPUT_DIR='/home/jovyan/data-vol-1/VideoMAE/_exps/unlabeled_0826_all' # eval
 
 MODEL_PATH='/home/jovyan/data-vol-1/VideoMAE/_exps/pretext_0826_v1/checkpoint-3199.pth' # finetune
 #MODEL_PATH='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0826_v1/checkpoint-best.pth' # eval
