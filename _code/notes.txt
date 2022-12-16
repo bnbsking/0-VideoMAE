@@ -1,0 +1,6 @@
+before training must check
++ run_class_finetuning.py: line453 lr_scheduler
++ run_class_finetuning.py: line476 weighted loss
++ datasets.py: line149 class
++ engine_for_finetuning.py: line163,193 top-K
++ kinetics.py: line85 imgFolderL
