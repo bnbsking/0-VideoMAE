@@ -146,7 +146,7 @@ def build_dataset(is_train, test_mode, args): # True, False, args
             args=args)
         nb_classes = 101
         if True:
-            nb_classes = 2
+            nb_classes = 4
     
     elif args.data_set == 'HMDB51':
         mode = None
