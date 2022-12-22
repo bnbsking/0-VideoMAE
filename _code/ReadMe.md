@@ -106,8 +106,15 @@
     + then generate \_exps/unlabeled_0826_all/active_complete.csv for next active cycle
 
 ### Others
-+ before downstream training must check
-    + run_class_finetuning.py: line453 lr_scheduler
++ Modified permanantly:
+    + run_mae_pretraining.py: line213-221 lr-scheduler
+    + kinetics.py:
+        + (downstream) line81-95   prepare dataset; line103-106 load image instead of videos; line312-314 length of dataset
+        + (pretext)    line510-519 prepare dataset; line538-540 load image instead of videos; line550-552 length of dataset
+    + run_mae_finetuning.py: line486-492 evaluation
+    + engine_for_finetuning.py: line176-201 evaluation
++ Modify before downstream training:
+    + run_class_finetuning.py: line453-461 lr_scheduler
     + run_class_finetuning.py: line476 weighted loss
     + datasets.py: line149 class
     + engine_for_finetuning.py: line163,193 top-K
