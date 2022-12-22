@@ -1,15 +1,15 @@
 #!/bin/bash
-DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/csvDownstream/20220826_v1'
-OUTPUT_DIR='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0826_v1'
+DATA_PATH='/home/jovyan/data-vol-1/VideoMAE/_data/csvDownstream/20220826_v2'
+OUTPUT_DIR='/home/jovyan/data-vol-1/VideoMAE/_exps/downstream_0826_v2'
 
-for FINETUNE_WEIGHT in $(ls $OUTPUT_DIR | grep checkpoint-1[0-9][0-9][0-9]); do 
+for FINETUNE_WEIGHT in $(ls $OUTPUT_DIR | grep 'checkpoint-[0-9]*.pth\|best.pth'); do # [0-9]*
     FINETUNE_WEIGHT=$OUTPUT_DIR/$FINETUNE_WEIGHT
     echo ---$FINETUNE_WEIGHT---
     echo ---$FINETUNE_WEIGHT--- >> $OUTPUT_DIR/eval.txt
     python run_class_finetuning.py \
     --model vit_base_patch16_224 \
     --data_set UCF101 \
-    --nb_classes 5 \
+    --nb_classes 4 \
     --data_path ${DATA_PATH} \
     --finetune ${FINETUNE_WEIGHT} \
     --log_dir ${OUTPUT_DIR} \
